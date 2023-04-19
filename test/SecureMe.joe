@@ -1,0 +1,103 @@
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.8.0 <0.9.0;
+
+import "forge-std/Test.sol";
+import "../src/SecureMe.sol";
+import "../src/FlashLoanRecipient.sol";
+import "../src/Handler.sol";
+
+contract SecureMeTest is Test {
+    SecureMe public instance;
+    FlashLoanRecipient public borrower;
+    Handler public handler;
+
+    function setUp() public {
+        instance = new SecureMe(100 ether);
+        borrower = new FlashLoanRecipient(address(instance));
+        handler = new Handler(instance);
+        // Constrain fuzz calls to the handler contract only
+        targetContract(address(handler));
+    }
+
+    function test_flashLoan() public {
+        require(instance.transfer(address(instance), 50), "Test contract does not have enough tokens");
+        uint256 preLoanBal = instance.balanceOf(address(instance));
+        console.log("Instance pre bal:", preLoanBal);
+        console.log("Test/ owner contract bal:", instance.balanceOf(address(this)));
+        console.log("borrower contract bal:", instance.balanceOf(address(borrower)));
+        // Borrow a flash loan for 50 tokens from the borrower contract
+        instance.flashLoan(borrower, 50);
+        uint256 postLoanBal = instance.balanceOf(address(instance));
+        console.log("Instance post bal:", postLoanBal);
+        assertEq(preLoanBal, postLoanBal);
+    }
+
+    function invariant_tokenSupply() public {
+        // Call all functions in targetContract and see if this assertion (i.e., total supply of tokens is 0) holds
+        // This test fails since 
+        assertEq(0, instance.totalSupply());
+    }
+
+        function _flashLoan() public {
+            // The contract balance must always go up after a flash loan
+
+        // uint256 preLoanBal = instance.balanceOf(address(instance));
+        // console.log("Instance pre bal:", preLoanBal);
+        // console.log("Test/ owner contract bal:", instance.balanceOf(address(this)));
+        // console.log("borrower contract bal:", instance.balanceOf(address(borrower)));
+        // // Borrow a flash loan for 50 tokens from the borrower contract
+        // instance.flashLoan(borrower, 50);
+        // uint256 postLoanBal = instance.balanceOf(address(instance));
+        // console.log("Instance post bal:", postLoanBal);
+        assertGe(0, handler.ghost_postLoanBal() - handler.ghost_preLoanBal());
+    }
+
+    function test_mintNotOwner() public {
+        // Change owner from this contract, to a random account
+        vm.prank(address(0x1));
+        // Expect a revert upon call
+        vm.expectRevert("Ownable: caller is not the owner");
+        // Make the call
+        instance.mint(address(0x123), 1000);
+
+    }
+
+    function test_mintOwner() public {
+        // Make call using owner (this testing contract)
+        // Should not revert
+        instance.mint(address(0x123), 1000);
+    }
+
+    // Function to test that contract ETH bal must increase after a deposit
+    function testFuzz_deposit(uint256 depositAmount) public {
+        // Cache pre deposit balance
+        vm.assume(depositAmount < 100 ether && depositAmount != 0);
+        uint256 preDepositBal = address(instance).balance;
+        console.log(preDepositBal);
+        // Prepare to make calla as a user
+        vm.prank(address(0x2));
+        deal(address(0x2), 100 ether);
+        // deposit wei as user
+        instance.deposit{value: depositAmount}();
+        uint256 postDepositBal = address(instance).balance;
+        // Assert that postDepositBal is more than preDepositBal
+        assertGt(postDepositBal, preDepositBal);
+        assertEq(instance.balanceOf(address(0x2)), depositAmount);
+    }
+
+    function _deposit() public {
+        // Make the call as a random users account, in this case 0x2
+        vm.prank(address(0x2));
+        // Fund the 0x2 account with 100 ether
+        deal(address(0x2), 100 ether);
+        // Make the deposit function call with wei as the msg.value
+        instance.deposit{value: 100000000000000000001}();
+        /* Assert that the amount of balance in the SecureMe contract 
+        and the tokens minted to user are the same */
+        assertEq(address(instance).balance, instance.balanceOf(address(0x2)));
+        // Log the balances so we could see them in the terminal 
+        // (have to use forge test -vv to print logs)
+        console.log("Contract balance:", address(instance).balance);
+        console.log("User token balance:", instance.balanceOf(address(0x2)));
+    } 
+}

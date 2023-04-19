@@ -1,0 +1,9 @@
+# [profile.default]
+# src = 'src'
+# out = 'out'
+# libs = ['lib']
+
+# chain_id = 1
+# eth_rpc_url = 'https://eth-mainnet.g.alchemy.com/v2/BTHcxVGoMMbrtcD_c-ZUsoc2eTCjUIPg'
+# fork_block_number = 14811771
+# etherscan_api_key = '{your_etherscan_api_key}'
