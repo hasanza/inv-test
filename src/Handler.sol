@@ -24,7 +24,7 @@ contract Handler is CommonBase, StdCheats, StdUtils {
 
     // Function to deposit ETH directly into our contract
     function directDepositETH(uint256 amount) public {
-        (bool success, bytes memory res) = address(instance).call{
+        (bool success,) = address(instance).call{
             value: amount
         }("");
         require(success);
@@ -37,9 +37,6 @@ contract Handler is CommonBase, StdCheats, StdUtils {
 
     function ethBal() public view returns (uint256) {
         return address(instance).balance;
-    }
-
-    fallback() external payable {
     }
 
 }
