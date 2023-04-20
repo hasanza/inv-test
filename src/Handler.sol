@@ -14,15 +14,6 @@ contract Handler is CommonBase, StdCheats, StdUtils {
         instance = secureMe;
     }
 
-    // Fuzzer generates random calls w/ random inputs for functions defined in the handler
-    // function flashBorrow(FlashLoanRecipient recipient, uint256 amount) public {
-    //     ghost_preLoanBal = instance.balanceOf(address(instance));
-    //     instance.flashLoan(recipient, amount);
-    //     ghost_postLoanBal = instance.balanceOf(address(instance));
-    // }
-
-    // Deposit ETH and get equal SMTK Minted
-
     function mint(address to, uint256 amount) public {
         instance.mint(to, amount);
         
@@ -46,6 +37,9 @@ contract Handler is CommonBase, StdCheats, StdUtils {
 
     function ethBal() public view returns (uint256) {
         return address(instance).balance;
+    }
+
+    fallback() external payable {
     }
 
 }

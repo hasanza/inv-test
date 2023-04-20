@@ -6,9 +6,6 @@ import "../src/SecureMe.sol";
 import "../src/Handler.sol";
 
 contract SecureMeInvariantTest is Test {
-       address public DAIAddr;
-    ERC20 DAI;
-    address user;
     SecureMe public instance;
     Handler public handler;
 
